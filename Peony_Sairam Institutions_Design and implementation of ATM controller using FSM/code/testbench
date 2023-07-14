@@ -1,0 +1,102 @@
+module atmfsm1_tb;
+
+  // Parameters
+  parameter PERIOD = 10; // Clock period
+
+  // Signals
+  reg clk;
+  reg reset;
+  reg card_inserted;
+  reg pin_entered;
+  reg withdrawal_request;
+  wire money_dispensed;
+  wire card_ejected;
+
+  // Instantiate the ATM module
+  atmfsm1 atm (
+    .clk(clk),
+    .reset(reset),
+    .card_inserted(card_inserted),
+    .pin_entered(pin_entered),
+    .withdrawal_request(withdrawal_request),
+    .money_dispensed(money_dispensed),
+    .card_ejected(card_ejected)
+  );
+
+  // Clock generation
+  always #(PERIOD/2) clk = ~clk;
+
+  // Test scenario
+  initial begin
+    reset = 1;
+    card_inserted = 0;
+    pin_entered = 0;
+    withdrawal_request = 0;
+
+    #PERIOD;
+    reset = 0;
+
+    // Scenario 1: No card inserted
+    card_inserted = 0;
+    pin_entered = 0;
+    withdrawal_request = 0;
+
+    #PERIOD;
+    card_inserted = 0;
+    pin_entered = 0;
+    withdrawal_request = 0;
+
+    // Scenario 2: Card inserted, no PIN entered
+    card_inserted = 1;
+    pin_entered = 0;
+    withdrawal_request = 0;
+
+    #PERIOD;
+    card_inserted = 1;
+    pin_entered = 0;
+    withdrawal_request = 0;
+
+    // Scenario 3: Card inserted, PIN entered, no withdrawal request
+    card_inserted = 1;
+    pin_entered = 1;
+    withdrawal_request = 0;
+
+    #PERIOD;
+    card_inserted = 1;
+    pin_entered = 1;
+    withdrawal_request = 0;
+
+    // Scenario 4: Card inserted, PIN entered, withdrawal request
+    card_inserted = 1;
+    pin_entered = 1;
+    withdrawal_request = 1;
+
+    #PERIOD;
+    card_inserted = 1;
+    pin_entered = 1;
+    withdrawal_request = 1;
+
+    // Scenario 5: Money dispensed
+    card_inserted = 1;
+    pin_entered = 1;
+    withdrawal_request = 1;
+
+    #PERIOD;
+    card_inserted = 1;
+    pin_entered = 1;
+    withdrawal_request = 1;
+
+    // Scenario 6: Card ejected
+    card_inserted = 1;
+    pin_entered = 1;
+    withdrawal_request = 1;
+
+    #PERIOD;
+    card_inserted = 1;
+    pin_entered = 1;
+    withdrawal_request = 1;
+
+    $finish;
+  end
+
+endmodule
