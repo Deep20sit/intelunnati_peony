@@ -1,0 +1,110 @@
+module atmfsm1(
+  input wire clk,                
+  input wire reset,              
+  input wire card_inserted,      
+  input wire pin_entered,        
+  input wire withdrawal_request, 
+  output reg money_dispensed,    
+  output reg card_ejected        
+);
+
+
+  reg [2:0] state;
+  parameter IDLE = 3'b000;
+  parameter CARD_INSERTED = 3'b001;
+  parameter PIN_ENTERED = 3'b010;
+  parameter WITHDRAWAL = 3'b011;
+  parameter MONEY_DISPENSED = 3'b100;
+  parameter CARD_EJECTED = 3'b101;
+
+  reg [2:0] next_state;
+  reg next_money_dispensed;
+  reg next_card_ejected;
+
+  
+  always @(*) begin
+    case (state)
+      IDLE:
+        begin
+          if (card_inserted)
+            next_state = CARD_INSERTED;
+          else
+            next_state = IDLE;
+
+          next_money_dispensed = 0;
+          next_card_ejected = 0;
+        end
+
+      CARD_INSERTED:
+        begin
+          if (pin_entered)
+            next_state = PIN_ENTERED;
+          else if (!card_inserted)
+            next_state = IDLE;
+          else
+            next_state = CARD_INSERTED;
+
+          next_money_dispensed = 0;
+          next_card_ejected = 0;
+        end
+
+      PIN_ENTERED:
+        begin
+          if (withdrawal_request)
+            next_state = WITHDRAWAL;
+          else if (!card_inserted)
+            next_state = IDLE;
+          else if (!pin_entered)
+            next_state = CARD_INSERTED;
+          else
+            next_state = PIN_ENTERED;
+
+          next_money_dispensed = 0;
+          next_card_ejected = 0;
+        end
+
+      WITHDRAWAL:
+        begin
+          if (!card_inserted)
+            next_state = IDLE;
+          else if (!pin_entered)
+            next_state = CARD_INSERTED;
+          else if (withdrawal_request)
+            next_state = MONEY_DISPENSED;
+          else
+            next_state = WITHDRAWAL;
+
+          next_money_dispensed = 0;
+          next_card_ejected = 0;
+        end
+
+      MONEY_DISPENSED:
+        begin
+          next_state = CARD_EJECTED;
+          next_money_dispensed = 1;
+          next_card_ejected = 0;
+        end
+
+      CARD_EJECTED:
+        begin
+          next_state = IDLE;
+          next_money_dispensed = 0;
+          next_card_ejected = 1;
+        end
+    endcase
+  end
+
+  
+  always @(posedge clk or posedge reset) begin
+    if (reset)
+      state <= IDLE;
+    else
+      state <= next_state;
+  end
+
+  always @(posedge clk) begin
+    money_dispensed <= next_money_dispensed;
+    card_ejected <= next_card_ejected;
+  end
+
+endmodule
